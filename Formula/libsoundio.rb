@@ -21,6 +21,21 @@ class Libsoundio < Formula
   def install
     system "cmake", ".", *std_cmake_args
     system "make", "install"
+    (lib/"pkgconfig/soundio.pc").write pc_file
+  end
+
+  def pc_file; <<~EOS
+    prefix=#{prefix}
+    libdir=${prefix}/lib
+    includedir=${prefix}/include
+
+    Name: libsoundio
+    Description: Cross-platform audio input and output
+    Version: #{version}
+    Requires:
+    Libs: -L${libdir} -lsoundio
+    Cflags: -I${includedir}
+  EOS
   end
 
   test do
@@ -39,7 +54,8 @@ class Libsoundio < Formula
         return 0;
       }
     EOS
-    system ENV.cc, "-L#{lib}", "-lsoundio", "test.c", "-o", "test"
+    flags = `pkg-config --libs --cflags soundio`.split
+    system ENV.cc, "test.c", "-o", "test", *flags
     system "./test"
   end
 end
